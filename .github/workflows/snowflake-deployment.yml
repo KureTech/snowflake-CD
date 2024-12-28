@@ -1,0 +1,86 @@
+name: Snowflake Deployment Pipeline
+
+# Trigger the workflow
+on:
+  push:
+    branches:
+      - main  # Trigger deployment on push to the main branch
+    paths:
+      - 'deploy/**'  # Trigger deployment when changes are pushed to the "deploy" folder
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment (test, prod)'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - prod
+
+jobs:
+  deploy-snowflake-changes-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository to get the SQL files
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Python 3.8.x
+      - name: Use Python 3.8.x
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.8.x  
+
+      # Step 3: Install schemachange tool
+      - name: Install schemachange
+        run: |
+          echo "Installing schemachange..."
+          pip install schemachange
+
+      # Step 4: Set Snowflake environment variables based on the environment input
+      - name: Set Snowflake credentials for environment
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets['SNOWFLAKE_ACCOUNT_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_USER: ${{ secrets['SNOWFLAKE_USER_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_PASSWORD: ${{ secrets['SNOWFLAKE_PASSWORD_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_ROLE: ${{ secrets['SNOWFLAKE_ROLE_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets['SNOWFLAKE_WAREHOUSE_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_DATABASE: ${{ secrets['SNOWFLAKE_DATABASE_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_SCHEMA: ${{ secrets['SNOWFLAKE_SCHEMA_' + github.event.inputs.environment | upper] }}
+        run: |
+          echo "Deploying to environment: ${{ github.event.inputs.environment }}"
+          echo "Using Snowflake account: $SNOWFLAKE_ACCOUNT"
+          echo "Using Snowflake warehouse: $SNOWFLAKE_WAREHOUSE"
+          echo "Using Snowflake database: $SNOWFLAKE_DATABASE"
+          echo "Using Snowflake schema: $SNOWFLAKE_SCHEMA"
+
+      # Step 5: Run Snowflake SQL scripts to deploy to Snowflake
+      - name: Run Snowflake SQL script
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets['SNOWFLAKE_ACCOUNT_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_USER: ${{ secrets['SNOWFLAKE_USER_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_PASSWORD: ${{ secrets['SNOWFLAKE_PASSWORD_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_ROLE: ${{ secrets['SNOWFLAKE_ROLE_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets['SNOWFLAKE_WAREHOUSE_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_DATABASE: ${{ secrets['SNOWFLAKE_DATABASE_' + github.event.inputs.environment | upper] }}
+          SNOWFLAKE_SCHEMA: ${{ secrets['SNOWFLAKE_SCHEMA_' + github.event.inputs.environment | upper] }}
+        run: |
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          
+          # Verify python version (for debugging)
+          python --version
+
+          # Run schemachange to deploy changes
+          echo "Running schemachange"
+          schemachange -f $GITHUB_WORKSPACE/deploy \
+            -a $SNOWFLAKE_ACCOUNT \
+            -u $SNOWFLAKE_USER \
+            -p $SNOWFLAKE_PASSWORD \
+            -r $SNOWFLAKE_ROLE \
+            -w $SNOWFLAKE_WAREHOUSE \
+            -d $SNOWFLAKE_DATABASE \
+            -s $SNOWFLAKE_SCHEMA \
+            -c $SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY \
+            --create-change-history-table

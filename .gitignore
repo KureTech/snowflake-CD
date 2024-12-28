@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+
+# Node.js
+node_modules/
+.env
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+:wq!
+
