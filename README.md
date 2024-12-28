@@ -25,18 +25,17 @@
 
 ## Environment Selection via `workflow_dispatch`
 
-The `inputs` field allows the user to manually trigger the deployment and choose the target environment (e.g., `dev`, `prod`, or `test`). The `environment` input is required and defaults to `test`, but you can select another environment when running the workflow manually.
+The `inputs` field allows the user to manually trigger the deployment and choose the target environment (e.g., `prod`, or `test`). The `environment` input is required and defaults to `test`, but you can select another environment when running the workflow manually.
 
 ### Example of Environment Selection Input:
 ```yaml
 inputs:
   environment:
-    description: 'Select the environment (dev, prod, test)'
+    description: 'Select the environment (prod, test)'
     required: true
     default: 'test'
     type: choice
     options:
-      - dev
       - prod
       - test
 ```
@@ -63,3 +62,8 @@ Place your SQL migration files in the `deploy/` folder (or wherever you specify 
 - The `--create-change-history-table` flag is used to ensure that the table used to track the migration history (`CHANGE_HISTORY`) is created if it does not already exist.
 - `$SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY`: This is the Snowflake schema and table where migration history will be tracked.
 ```
+
+##Refer these for additinal details on Alerts
+https://interworks.com/blog/2023/05/23/understanding-snowflake-alerts-and-notifications/
+https://www.phdata.io/blog/how-to-create-alerts-in-snowflake/
+https://medium.com/snowflake/snowflake-alerts-2b5254bd3ae7
